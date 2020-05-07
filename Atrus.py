@@ -1,7 +1,12 @@
 import praw
 
 reddit = praw.Reddit('atrusbot')
+sub = reddit.subreddit('NintendoSwitchDeals')
 
+# returns all post titles with links to
+# them as long as the corresponding applies:
+# 1. must be an eshop, amazon, or gamestop deal
+# 2. must be in the US / USA
 def get_deal_titles(submissions):
     body = ''
     for submission in submissions:
@@ -23,25 +28,28 @@ def get_deal_titles(submissions):
         body += '[' + submission.title + ']' + '(' + submission.permalink + ')' + '\n\n'
     return body
 
-def get_weekly_deals():
-    # get the top 50 submisions for the 
-    # week from /r/nintendoswitchdeals
-    sub = reddit.subreddit('NintendoSwitchDeals')
-        
-    # put together a message
-    # -----------------------
-    # weekly deals
-    submissions = sub.top(time_filter='week', limit=50)
-    body = '#Top deals of the week\n\n\n\n'
-    body += get_deal_titles(submissions)
-    
-    #daily deals
-    submissions = sub.top(time_filter='day', limit=30)
-    body += '\n\n\n\n#Top Deals of the day\n\n\n\n'
-    body += get_deal_titles(submissions)
-    # -----------------------
+# get deals for the day, week, or both
+def get_deals(day_or_week):
+    both = day_or_week == 'both'
+    if (both == True):
+        day_or_week = 'week'
 
-    return body
+    # get top 50 submissions from /r/NintendoSwitchDeals
+    submissions = sub.top(time_filter=day_or_week, limit=50)
+
+    # start out the message with a heading
+    body = '#Top deals of the ' + day_or_week + '\n\n\n\n'
+    body += get_deal_titles(submissions) # add appropriate post titles to message
+
+    # if both was inputted, we also 
+    # need to get top deals of the day
+    if (both == True):
+        return body + get_deals('day')
+
+    # if both was not inputted,
+    # simply return the message
+    else:
+        return body
 
 # if AtrusBot has gotten any messages, 
 # reply back with a list of on sale games
@@ -50,6 +58,21 @@ for item in inbox:
     # do not reply to comments
     if (item.was_comment == True):
         continue
-    item.reply(get_weekly_deals())
+
+    # get weekly deals or daily?
+    day_or_week = ''
+    if (item.body.lower().find('daily') != -1 or
+        item.body.lower().find('day') != -1):
+        day_or_week += 'day'
+    if (item.body.lower().find('weekly') != -1 or
+        item.body.lower().find('week') != -1):
+        day_or_week += 'week'
+    # if both day and week or neither, do both
+    if (len(day_or_week) > 4 or
+        len(day_or_week) == 0):
+        day_or_week = 'both'    
+
+    # reply with the deals string
+    item.reply(get_deals(day_or_week))
     item.mark_read()
     
