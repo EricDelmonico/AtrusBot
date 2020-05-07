@@ -1,4 +1,5 @@
 import praw
+import time
 
 reddit = praw.Reddit('atrusbot')
 sub = reddit.subreddit('NintendoSwitchDeals')
@@ -51,28 +52,33 @@ def get_deals(day_or_week):
     else:
         return body
 
-# if AtrusBot has gotten any messages, 
-# reply back with a list of on sale games
-inbox = reddit.inbox.unread()
-for item in inbox:
-    # do not reply to comments
-    if (item.was_comment == True):
-        continue
+iteration = 1
+while (True):
+    print("Iteration: " + str(iteration))
+    iteration += 1
+    # if AtrusBot has gotten any messages, 
+    # reply back with a list of on sale games
+    time.sleep(10)
+    inbox = reddit.inbox.unread()
+    for item in inbox:
+        # do not reply to comments
+        if (item.was_comment == True):
+            continue
 
-    # get weekly deals or daily?
-    day_or_week = ''
-    if (item.body.lower().find('daily') != -1 or
-        item.body.lower().find('day') != -1):
-        day_or_week += 'day'
-    if (item.body.lower().find('weekly') != -1 or
-        item.body.lower().find('week') != -1):
-        day_or_week += 'week'
-    # if both day and week or neither, do both
-    if (len(day_or_week) > 4 or
-        len(day_or_week) == 0):
-        day_or_week = 'both'    
+        # get weekly deals or daily?
+        day_or_week = ''
+        if (item.body.lower().find('daily') != -1 or
+            item.body.lower().find('day') != -1):
+            day_or_week += 'day'
+        if (item.body.lower().find('weekly') != -1 or
+            item.body.lower().find('week') != -1):
+            day_or_week += 'week'
+        # if both day and week or neither, do both
+        if (len(day_or_week) > 4 or
+            len(day_or_week) == 0):
+            day_or_week = 'both'    
 
-    # reply with the deals string
-    item.reply(get_deals(day_or_week))
-    item.mark_read()
+        # reply with the deals string
+        item.reply(get_deals(day_or_week))
+        item.mark_read()
     
